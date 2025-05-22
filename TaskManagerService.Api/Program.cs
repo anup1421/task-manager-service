@@ -39,21 +39,33 @@ namespace TaskManagerService.Api
             // Add services to the container.
             builder.Services.AddControllers();
 
+            // Add DbContext
+            builder.Services.AddDbContext<TaskManagerService.Data.TaskManagerDbContext>(options =>
+                options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
             // Configure JWT Authentication
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
                         ValidateLifetime = true,
                         ValidateIssuerSigningKey = true,
-                        ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "TaskManagerService",
-                        ValidAudience = builder.Configuration["Jwt:Audience"] ?? "TaskManagerService",
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "your-secret-key-should-be-at-least-32-characters-long"))
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["Jwt:Key"]!))
                     };
                 });
+
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+            });
+
+            // Add services
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
             // Configure CORS
             builder.Services.AddCors(options =>

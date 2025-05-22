@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -23,10 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\BackendService.Api\BackendService.Api.csproj" />
-    <ProjectReference Include="..\BackendService.Core\BackendService.Core.csproj" />
-    <ProjectReference Include="..\BackendService.Data\BackendService.Data.csproj" />
-    <ProjectReference Include="..\BackendService.Infrastructure\BackendService.Infrastructure.csproj" />
+    <ProjectReference Include="..\TaskManagerService.Api\TaskManagerService.Api.csproj" />
+    <ProjectReference Include="..\TaskManagerService.Core\TaskManagerService.Core.csproj" />
+    <ProjectReference Include="..\TaskManagerService.Data\TaskManagerService.Data.csproj" />
+    <ProjectReference Include="..\TaskManagerService.Infrastructure\TaskManagerService.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
