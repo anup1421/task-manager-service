@@ -22,9 +22,19 @@ logs/
 *.log
 
 # Environment files
+.env
 appsettings.Development.json
 appsettings.Production.json
 appsettings.Staging.json
+
+# Docker
+.dockerignore
+Dockerfile*
+docker-compose.override.yml
+**/.docker/**
+
+# PostgreSQL data directory
+postgres_data/
 
 # NuGet Packages
 *.nupkg

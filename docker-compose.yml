@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/dockerfile
+    container_name: taskmanager-api
+    ports:
+      - "5000:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=db;Port=5432;Database=TaskManagerServiceDb;User Id=postgres;Password=postgres;
+      - Jwt__Key=your-secret-key-should-be-at-least-32-characters-long
+      - Jwt__Issuer=TaskManagerService
+      - Jwt__Audience=TaskManagerService
+      - Jwt__TokenLifetimeMinutes=60
+      - Jwt__RefreshTokenLifetimeDays=7
+    depends_on:
+      db:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    networks:
+      - taskmanager-network
+
+  db:
+    image: postgres:16-alpine
+    container_name: taskmanager-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: TaskManagerServiceDb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - taskmanager-network
+
+  migrations:
+    build:
+      context: .
+      dockerfile: docker/dockerfile
+    container_name: taskmanager-migrations
+    command: >
+      sh -c "
+      echo 'Waiting for database to be ready...' &&
+      until dotnet ef database update --project MigrationRunner -s TaskManagerService.Api; do
+        echo 'Retrying database migration in 5 seconds...';
+        sleep 5;
+      done"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=db;Port=5432;Database=TaskManagerServiceDb;User Id=postgres;Password=postgres;
+    networks:
+      - taskmanager-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@taskmanager.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - taskmanager-network
+
+networks:
+  taskmanager-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

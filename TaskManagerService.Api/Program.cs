@@ -1,5 +1,6 @@
 using TaskManagerService.Api;
 using Serilog;
+using DotNetEnv;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
@@ -19,6 +20,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Net.Http.Headers;
+using Microsoft.EntityFrameworkCore;
+using TaskManagerService.Core.Services;
 
 namespace TaskManagerService.Api
 {
@@ -26,7 +29,31 @@ namespace TaskManagerService.Api
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+// Load environment variables from .env file
+DotNetEnv.Env.Load();
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Configure appsettings with environment variables
+builder.Configuration.AddEnvironmentVariables();
+
+// Replace %VARIABLE% with environment variable values
+foreach (var pair in builder.Configuration.AsEnumerable())
+{
+    if (pair.Value != null && pair.Value.Contains('%'))
+    {
+        var newValue = pair.Value;
+        foreach (System.Collections.DictionaryEntry env in System.Environment.GetEnvironmentVariables())
+        {
+            var envVar = env.Key?.ToString();
+            if (!string.IsNullOrEmpty(envVar))
+            {
+                newValue = newValue.Replace($"%{envVar}%", env.Value?.ToString() ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+        builder.Configuration[pair.Key] = newValue;
+    }
+}
 
             // Configure Serilog
             builder.Host.UseSerilog((context, config) =>
@@ -40,7 +67,7 @@ namespace TaskManagerService.Api
             builder.Services.AddControllers();
 
             // Add DbContext
-            builder.Services.AddDbContext<TaskManagerService.Data.TaskManagerDbContext>(options =>
+            builder.Services.AddDbContext<TaskManagerService.Core.Data.TaskManagerDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Configure JWT Authentication
@@ -63,9 +90,9 @@ namespace TaskManagerService.Api
             });
 
             // Add services
-            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<TaskManagerService.Core.Interfaces.IUserService, TaskManagerService.Core.Services.UserService>();
             builder.Services.AddHttpContextAccessor();
-            builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("Jwt"));
+            builder.Services.Configure<TaskManagerService.Core.Models.JwtSettings>(builder.Configuration.GetSection("Jwt"));
 
             // Configure CORS
             builder.Services.AddCors(options =>

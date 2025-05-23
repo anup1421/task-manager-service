@@ -3,7 +3,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
+using TaskManagerService.Core.Data;
 using TaskManagerService.Core.Interfaces;
 using TaskManagerService.Core.Models;
 
@@ -12,9 +14,9 @@ namespace TaskManagerService.Core.Services
     public class UserService : IUserService
     {
         private readonly IConfiguration _configuration;
-        private readonly ApplicationDbContext _context;
+        private readonly TaskManagerDbContext _context;
 
-        public UserService(IConfiguration configuration, ApplicationDbContext context)
+        public UserService(IConfiguration configuration, TaskManagerDbContext context)
         {
             _configuration = configuration;
             _context = context;
@@ -88,7 +90,7 @@ namespace TaskManagerService.Core.Services
         public async Task<User> UpdateUserAsync(int id, UserDto userDto)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user == null) throw new NotFoundException("User not found");
+            if (user == null) throw new Exception("User not found");
 
             user.FirstName = userDto.FirstName;
             user.LastName = userDto.LastName;
@@ -106,7 +108,7 @@ namespace TaskManagerService.Core.Services
         public async Task DeleteUserAsync(int id)
         {
             var user = await _context.Users.FindAsync(id);
-            if (user == null) throw new NotFoundException("User not found");
+            if (user == null) throw new Exception("User not found");
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();

@@ -35,8 +35,10 @@ namespace TaskManagerService.Core.Models
 
         public DateTime? UpdatedAt { get; set; }
 
-        // Navigation properties for future relationships
-        public virtual ICollection<Task> Tasks { get; set; } = new HashSet<Task>();
+        [StringLength(500)]
+        public string? RefreshToken { get; set; }
+        
+        public DateTime? RefreshTokenExpiryTime { get; set; }
     }
 
     public class UserDto
